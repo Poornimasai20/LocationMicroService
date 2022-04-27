@@ -29,7 +29,6 @@ public class FlightController {
 
 	private static final String PATTERN = "[a-zA-Z\\s?]{2,}";
 	private static final String FLIGHT_MODEL_PATTERN = "[a-zA-Z0-9-\\s?]{2,}";
-	private static final String USER_URL="http://USER-MICROSERVICE/user/get-user/";
 	
 	@Autowired
 	FlightService flightService;
@@ -46,15 +45,10 @@ public class FlightController {
 	}
 	
 	//This path is used while booking the flight to get the flight details based flight ID
-	@GetMapping("/get-flight-by-id/{userId}/{flightId}")
+	@GetMapping("/get-flight-by-id/{flightId}")
 	public ResponseEntity<Flight> getFlightById(
-			@PathVariable("flightId") int flightId,
-			@PathVariable("userId") int userId){
-		try {
-			 restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return null;
-		}
+			@PathVariable("flightId") int flightId)
+	{
 		Flight flight = flightService.getFlightByFlightId(flightId);
 		if(flight==null) {
 			throw new NoSuchFlightIdException("There is no flight with flight ID "+flightId);
@@ -63,7 +57,7 @@ public class FlightController {
 	}
 	
 	//This path is only used by the admins to fetch the flight details based on the flight ID
-	@GetMapping("/get-flight-by-id-admin/{userId}/{flightId}")
+	@GetMapping("/get-flight-by-id-admin/{flightId}")
 	public ResponseEntity<Flight> getFlightByIdAdmin(
 			@PathVariable("flightId") int flightId,
 			@PathVariable("userId") int userId){
@@ -71,31 +65,15 @@ public class FlightController {
 		if(flight==null) {
 			throw new NoSuchFlightIdException("There is no flight with flight ID "+flightId);
 		}
-		User user=null;
-		try {
-			 user = restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return null;
-		}
-		if(!user.getUserType().equalsIgnoreCase("Admin")) {
-			throw new InvalidUserException("Only admins can view the flight details.");
-		}
+		
 		return new ResponseEntity<>(flight,HttpStatus.OK);
 	}
 	
-	@PostMapping("/add-one-flight/{userId}")
+	@PostMapping("/add-one-flight")
 	public ResponseEntity<String> addOneFlight(
-			@RequestBody Flight flight,
-			@PathVariable("userId") int userId){
-		User user=null;
-		try {
-			 user = restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return new ResponseEntity<>(ex.getMessage(),HttpStatus.NOT_FOUND);
-		}
-		if(!user.getUserType().equalsIgnoreCase("Admin")) {
-			throw new InvalidUserException("Only admins can add the flight details.");
-		}
+			@RequestBody Flight flight)
+		
+	{
 		if(!flight.getArrivalLoc().matches(PATTERN)||
 		   !flight.getDepartureLoc().matches(PATTERN)||
 		   !flight.getFleetName().matches(PATTERN)||
@@ -105,44 +83,20 @@ public class FlightController {
 		return new ResponseEntity<>(flightService.addOneFlight(flight),HttpStatus.OK);
 	}
 	
-	//This path is used to update flight details after booking the flight 
+
 	@PutMapping("/update-flight")
 	public ResponseEntity<Flight> updateFlight(
 			@RequestBody Flight flight){
 		return new ResponseEntity<>(flightService.updateFlightDetail(flight),HttpStatus.OK);
 	}
 	
-	//This path is only used by the admins to update flight details
-	@PutMapping("/update-flight/{userId}")
-	public ResponseEntity<Flight> updateFlight(
-			@RequestBody Flight flight,
-			@PathVariable("userId") int userId){
-		User user=null;
-		try {
-			 user = restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return null;
-		}
-		if(!user.getUserType().equalsIgnoreCase("Admin")) {
-			throw new InvalidUserException("Only admins can update the flight details.");
-		}
-		return new ResponseEntity<>(flightService.updateFlightDetail(flight),HttpStatus.OK);
-	}
 	
 	
-	@DeleteMapping("/delete-flight-by-id/{userId}/{flightId}")
+	@DeleteMapping("/delete-flight-by-id/{flightId}")
 	public ResponseEntity<String> deleteFlightByid(
-			@PathVariable("flightId") int flightId,
-			@PathVariable("userId") int userId){
-		User user=null;
-		try {
-			 user = restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return new ResponseEntity<>(ex.getMessage(),HttpStatus.NOT_FOUND);
-		}
-		if(!user.getUserType().equalsIgnoreCase("Admin")) {
-			throw new InvalidUserException("Only admins can delete the flight details.");
-		}
+			@PathVariable("flightId") int flightId)
+	{
+			
 		Flight flight = flightService.getFlightByFlightId(flightId);
 		if(flight==null) {
 			throw new NoSuchFlightIdException("There is no flight with flight ID "+flightId);
@@ -151,22 +105,18 @@ public class FlightController {
 		return new ResponseEntity<>(flightService.deleteByFlightId(flightId),HttpStatus.OK);
 	}
 	
-	@DeleteMapping("/delete-all-flights/{userId}")
-	public ResponseEntity<String> deleteAllFlights(@PathVariable("userId") int userId){
-		User user=null;
-		try {
-			 user = restTemplate.getForObject(USER_URL + userId, User.class);
-		} catch (RuntimeException ex) {
-			return new ResponseEntity<>(ex.getMessage(),HttpStatus.NOT_FOUND);
-		}
-		if(!user.getUserType().equalsIgnoreCase("Admin")) {
-			throw new InvalidUserException("Only admins can delete the flight details.");
-		}
+	@DeleteMapping("/delete-all-flights")
+	public ResponseEntity<String> deleteAllFlights(){
+		
+		
 		if(flightService.getAllFlightDetails().isEmpty()) {
 			throw new NoDataFoundException("There are no records to delete the flight details.");
 		}
 		return new ResponseEntity<>(flightService.deleteAllFlightDetails(),HttpStatus.OK);
 	}
 	
+	
+
+
 	
 }
