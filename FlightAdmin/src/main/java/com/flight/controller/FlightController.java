@@ -59,8 +59,7 @@ public class FlightController {
 	//This path is only used by the admins to fetch the flight details based on the flight ID
 	@GetMapping("/get-flight-by-id-admin/{flightId}")
 	public ResponseEntity<Flight> getFlightByIdAdmin(
-			@PathVariable("flightId") int flightId,
-			@PathVariable("userId") int userId){
+			@PathVariable("flightId") int flightId){
 		Flight flight = flightService.getFlightByFlightId(flightId);
 		if(flight==null) {
 			throw new NoSuchFlightIdException("There is no flight with flight ID "+flightId);
